@@ -98,14 +98,17 @@ export const ownerMenuLinks = [
     { name: "Dashboard", path: "/owner", icon: dashboardIcon, coloredIcon: dashboardIconColored },
     { name: "Add car", path: "/owner/add-car", icon: addIcon, coloredIcon: addIconColored },
     { name: "Manage Cars", path: "/owner/manage-cars", icon: carIcon, coloredIcon: carIconColored },
+    { name: "Vehicle Categories", path: "/owner/manage-categories", icon: listIcon, coloredIcon: listIconColored },
+    { name: "Vehicle Images", path: "/owner/manage-vehicle-images", icon: listIcon, coloredIcon: listIconColored },
+    { name: "Coupons", path: "/owner/manage-coupons", icon: listIcon, coloredIcon: listIconColored },
+    { name: "Document Review", path: "/owner/manage-documents", icon: listIcon, coloredIcon: listIconColored },
+    { name: "Manage Brands", path: "/owner/manage-brands", icon: listIcon, coloredIcon: listIconColored },
     { name: "Manage Bookings", path: "/owner/manage-bookings", icon: listIcon, coloredIcon: listIconColored },
 ]
 
 export const userMenuLinks = [
     { name: "Dashboard", path: "/owner", icon: dashboardIcon, coloredIcon: dashboardIconColored },
-    { name: "Add car", path: "/owner/add-car", icon: addIcon, coloredIcon: addIconColored },
-    { name: "Manage Cars", path: "/owner/manage-cars", icon: carIcon, coloredIcon: carIconColored },
-    { name: "Manage Bookings", path: "/owner/documents", icon: listIcon, coloredIcon: listIconColored },
+    { name: "Documents", path: "/owner/documents", icon: listIcon, coloredIcon: listIconColored },
 ]
 
 export const dummyUserData = {

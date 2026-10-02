@@ -10,10 +10,15 @@ import Layout from "./pages/owner/Layout";
 import Dashboard from "./pages/owner/Dashboard";
 import AddCar from "./pages/owner/AddCar";
 import ManageCar from "./pages/owner/ManageCar";
+import ManageCategories from "./pages/owner/ManageCategories";
+import ManageVehicleImages from "./pages/owner/ManageVehicleImages";
+import ManageCoupons from "./pages/owner/ManageCoupons";
+import ManageDocuments from "./pages/owner/ManageDocuments";
 import ManageBooking from "./pages/owner/ManageBooking";
 import Login from "./components/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Alert from "./components/Alert";
+import ManageBrands from "./pages/owner/ManageBrands";
 
 const App = () => {
   const [alert, setAlert] = useState(null);
@@ -45,16 +50,25 @@ const App = () => {
         </Route>
 
         <Route path="/owner" element={<Layout />}>
-          <Route element={<ProtectedRoute allowedRoles={['CUSTOMER','ADMIN']} />}>
-            <Route index element={<Dashboard />} />
+          <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
             <Route path="add-car" element={<AddCar />} />
             <Route path="manage-cars" element={<ManageCar />} />
+            <Route path="manage-brands" element={<ManageBrands />} />
+            <Route path="manage-categories" element={<ManageCategories />} />
+            <Route path="manage-vehicle-images" element={<ManageVehicleImages />} />
+            <Route path="manage-coupons" element={<ManageCoupons />} />
+          </Route>
+          <Route element={<ProtectedRoute allowedRoles={['CUSTOMER','ADMIN']} />}>
+            <Route index element={<Dashboard />} />
             <Route path="manage-bookings" element={<ManageBooking />} />
+          </Route>
+          <Route element={<ProtectedRoute allowedRoles={['CUSTOMER']} />}>
+            <Route path="documents" element={<ManageBooking />} />
+          </Route>
+          <Route element={<ProtectedRoute allowedRoles={['ADMIN','SUPERADMIN']} />}>
+            <Route path="manage-documents" element={<ManageDocuments />} />
+          </Route>
         </Route>
-        <Route>
-           <Route allowedRoles={['CUSTOMER']} path="documents" element={<ManageBooking />} />
-        </Route>
-      </Route>
       </Routes>
       {!isOwnerPath && <Footer />}
     </>

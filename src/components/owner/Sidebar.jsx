@@ -9,6 +9,11 @@ const Sidebar = () => {
     const location = useLocation()
     const [image,setImage] = useState('')
     const {user} = useAuth()
+    const menuLinks = user?.role === "ADMIN"
+        ? ownerMenuLinks
+        : user?.role === "SUPERADMIN"
+            ? ownerMenuLinks.filter((link) => link.path === "/owner/manage-documents")
+            : userMenuLinks
 
     const updateImage = async () => {
         user1.image = URL.createObjectURL(image)
@@ -33,15 +38,7 @@ const Sidebar = () => {
         <p className='mt-2 text-base max-md:hidden'>Owner</p>
 
         <div className='w-full'>
-            {user.role === "ADMIN" ? ownerMenuLinks.map((link,index) => (
-                <NavLink key={index} to={link.path} className={`relative flex items-center gap-2 w-full py-3 pl-4 first:mt-6 ${link.path === location.pathname ? 'bg-primary/10 text-primary': 'text-gray-600'}`}>
-                    <img src={link.path === location.pathname ? link.coloredIcon : link.icon} alt="car icon" />
-                    <span className='max-md:hidden'>{link.name}</span>
-                    <div className={`${link.path === location.pathname && 'bg-primary'} w-1.5 h-8 rounded-l right-0 absolute`}>
-
-                    </div>
-                </NavLink>
-            )):userMenuLinks.map((link,index) => (
+            {menuLinks.map((link,index) => (
                 <NavLink key={index} to={link.path} className={`relative flex items-center gap-2 w-full py-3 pl-4 first:mt-6 ${link.path === location.pathname ? 'bg-primary/10 text-primary': 'text-gray-600'}`}>
                     <img src={link.path === location.pathname ? link.coloredIcon : link.icon} alt="car icon" />
                     <span className='max-md:hidden'>{link.name}</span>
