@@ -11,7 +11,7 @@ const FeatureSection = () => {
   const fetchCars = async () => {
     const response =  await api.get('/vehicles');
     setCars(response.data.vehicles);
-    console.log(cars)
+    
   }
 
   useEffect(() => {

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import  { useEffect, useState } from 'react'
 import Title from '../components/Title'
-import { assets, dummyCarData } from '../assets/assets'
+import { assets } from '../assets/assets'
 import CarCard from '../components/CarCard'
 import api from '../api/axios'
 const Cars = () => {
@@ -10,7 +10,7 @@ const Cars = () => {
     const fetchCars = async () => {
       const response =  await api.get('/vehicles');
       setCars(response.data.vehicles);
-      console.log(cars)
+  
     }
   
     useEffect(() => {
