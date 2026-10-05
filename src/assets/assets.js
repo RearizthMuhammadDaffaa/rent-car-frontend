@@ -109,6 +109,7 @@ export const ownerMenuLinks = [
 export const userMenuLinks = [
     { name: "Dashboard", path: "/owner", icon: dashboardIcon, coloredIcon: dashboardIconColored },
     { name: "Documents", path: "/owner/documents", icon: listIcon, coloredIcon: listIconColored },
+    { name: "Status Documents", path: "/owner/status-documents", icon: listIcon, coloredIcon: listIconColored },
 ]
 
 export const dummyUserData = {

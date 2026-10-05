@@ -19,6 +19,8 @@ import Login from "./components/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Alert from "./components/Alert";
 import ManageBrands from "./pages/owner/ManageBrands";
+import VerifyDocuments from "./pages/owner/VerifyDocuments";
+import StatusDocuments from "./pages/owner/StatusDocuments";
 
 const App = () => {
   const [alert, setAlert] = useState(null);
@@ -63,7 +65,8 @@ const App = () => {
             <Route path="manage-bookings" element={<ManageBooking />} />
           </Route>
           <Route element={<ProtectedRoute allowedRoles={['CUSTOMER']} />}>
-            <Route path="documents" element={<ManageBooking />} />
+            <Route path="documents" element={<VerifyDocuments />} />
+            <Route path="status-documents" element={<StatusDocuments />} />
           </Route>
           <Route element={<ProtectedRoute allowedRoles={['ADMIN','SUPERADMIN']} />}>
             <Route path="manage-documents" element={<ManageDocuments />} />

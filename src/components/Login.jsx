@@ -107,9 +107,13 @@ const Login = ({ setShowLogin, setAlert }) => {
             </span>
           </p>
         )}
-        <button className="bg-primary hover:bg-blue-800 transition-all text-white w-full py-2 rounded-md cursor-pointer">
+        {
+          loading ? ( <button type="submit" disabled={true} className="rounded-md bg-primary w-full py-2 font-medium text-white disabled:opacity-60">Saving</button>) 
+          : ( <button className="bg-primary hover:bg-blue-800 transition-all text-white w-full py-2 rounded-md cursor-pointer">
           {state === "register" ? "Create Account" : "Login"}
-        </button>
+        </button> )
+        }
+       
       </form>
     </div>
   );
