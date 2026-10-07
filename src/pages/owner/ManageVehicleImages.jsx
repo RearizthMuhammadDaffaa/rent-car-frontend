@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import Title from "../../components/owner/Title";
 import api from "../../api/axios";
+import Pagination from "../../components/Pagination";
 
 const getErrorMessage = (error) =>
   error.response?.data?.message || error.response?.data?.error?.message || "Something went wrong. Please try again.";
 
 const ManageVehicleImages = () => {
+  const limit = 5;
   const [images, setImages] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,44 +19,35 @@ const ManageVehicleImages = () => {
   const [imageFile, setImageFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState("");
+  const [page, setPage] = useState(1);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [pagination, setPagination] = useState({ page: 1, totalPage: 1 });
 
-  const fetchData = async () => {
+  const fetchData = async (requestedPage = page, isActive = () => true) => {
     setLoading(true);
     setError("");
     try {
       const [imagesResponse, vehiclesResponse] = await Promise.all([
-        api.get("/vehicle-images"),
-        api.get("/vehicles"),
+        api.get("/vehicle-images", { params: { page: requestedPage, limit } }),
+        api.get("/vehicles", { params: { page: 1, limit: 100 } }),
       ]);
-      setImages(imagesResponse.data.vehicleImages || []);
-      setVehicles(vehiclesResponse.data.vehicles || []);
+      if (!isActive()) return;
+      const imageResult = imagesResponse.data.vehicleImages;
+      setImages(imageResult?.vehicleImages || []);
+      setPagination(imageResult?.pagination || { page: 1, totalPage: 1 });
+      setVehicles(vehiclesResponse.data.vehicles?.vehicles || []);
     } catch (requestError) {
-      setError(getErrorMessage(requestError));
+      if (isActive()) setError(getErrorMessage(requestError));
     } finally {
-      setLoading(false);
+      if (isActive()) setLoading(false);
     }
   };
 
   useEffect(() => {
     let active = true;
-    const loadInitialData = async () => {
-      try {
-        const [imagesResponse, vehiclesResponse] = await Promise.all([
-          api.get("/vehicle-images"),
-          api.get("/vehicles"),
-        ]);
-        if (!active) return;
-        setImages(imagesResponse.data.vehicleImages || []);
-        setVehicles(vehiclesResponse.data.vehicles || []);
-      } catch (requestError) {
-        if (active) setError(getErrorMessage(requestError));
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-    loadInitialData();
+    fetchData(page, () => active);
     return () => { active = false; };
-  }, []);
+  }, [page, refreshKey]);
 
   const resetForm = () => {
     setFormOpen(false);
@@ -92,7 +85,7 @@ const ManageVehicleImages = () => {
       }
       setNotice(editingImage ? "Vehicle image updated successfully." : "Vehicle image uploaded successfully.");
       resetForm();
-      await fetchData();
+      setRefreshKey((current) => current + 1);
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
@@ -109,6 +102,11 @@ const ManageVehicleImages = () => {
       await api.delete(`/vehicle-images/${image.id}`);
       setImages((current) => current.filter((item) => item.id !== image.id));
       setNotice("Vehicle image deleted successfully.");
+      if (images.length === 1 && page > 1) {
+        setPage(page - 1);
+      } else {
+        setRefreshKey((current) => current + 1);
+      }
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
@@ -144,6 +142,7 @@ const ManageVehicleImages = () => {
           </article>
         ))}
       </div>
+      {pagination.totalPage > 0 && <Pagination page={page} setPage={setPage} totalPage={pagination.totalPage} />}
       {loading && <p className="mt-6 rounded-md border border-borderColor p-8 text-center text-gray-600">Loading vehicle images...</p>}
       {!loading && !error && images.length === 0 && <p className="mt-6 rounded-md border border-borderColor p-8 text-center text-gray-600">No vehicle images have been uploaded yet.</p>}
 

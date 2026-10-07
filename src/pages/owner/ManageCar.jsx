@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Title from "../../components/owner/Title";
 import api from "../../api/axios";
+import Pagination from "../../components/Pagination";
 
 const inputClass = "w-full rounded-md border border-borderColor px-3 py-2 outline-none";
 const statuses = ["AVAILABLE", "BOOKED", "MAINTENANCE", "INACTIVE"];
@@ -9,6 +10,7 @@ const getErrorMessage = (error) =>
   error.response?.data?.message || "Something went wrong. Please try again.";
 
 const ManageCar = () => {
+  const limit = 5;
   const [cars, setCars] = useState([]);
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -20,48 +22,37 @@ const ManageCar = () => {
   const [saving, setSaving] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState("");
   const [deleting, setDeleting] = useState("");
+  const [page, setPage] = useState(1);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [pagination, setPagination] = useState({ page: 1, totalPage: 1 });
 
-  const fetchCars = async () => {
+  const fetchCars = async (requestedPage = page, isActive = () => true) => {
     setLoading(true);
     setError("");
     try {
       const [vehiclesResponse, brandsResponse, categoriesResponse] = await Promise.all([
-        api.get("/vehicles"),
-        api.get("/brands"),
-        api.get("/vehicle-cat"),
+        api.get("/vehicles", { params: { page: requestedPage, limit } }),
+        api.get("/brands", { params: { page: 1, limit: 100 } }),
+        api.get("/vehicle-cat", { params: { page: 1, limit: 100 } }),
       ]);
-      setCars(vehiclesResponse.data.vehicles || []);
-      setBrands(brandsResponse.data.brands || []);
-      setCategories(categoriesResponse.data.vehiclesCat || []);
+      if (!isActive()) return;
+      const vehicleResult = vehiclesResponse.data.vehicles;
+      setCars(vehicleResult?.vehicles || []);
+      setPagination(vehicleResult?.pagination || { page: 1, totalPage: 1 });
+      setBrands(brandsResponse.data.brands?.brands || []);
+      setCategories(categoriesResponse.data.vehiclesCat?.vehiclesCat || []);
     } catch (requestError) {
-      setError(getErrorMessage(requestError));
+      if (isActive()) setError(getErrorMessage(requestError));
     } finally {
-      setLoading(false);
+      if (isActive()) setLoading(false);
     }
   };
 
   useEffect(() => {
     let active = true;
-    const loadInitialData = async () => {
-      try {
-        const [vehiclesResponse, brandsResponse, categoriesResponse] = await Promise.all([
-          api.get("/vehicles"),
-          api.get("/brands"),
-          api.get("/vehicle-cat"),
-        ]);
-        if (!active) return;
-        setCars(vehiclesResponse.data.vehicles || []);
-        setBrands(brandsResponse.data.brands || []);
-        setCategories(categoriesResponse.data.vehiclesCat || []);
-      } catch (requestError) {
-        if (active) setError(getErrorMessage(requestError));
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-    loadInitialData();
+    fetchCars(page, () => active);
     return () => { active = false; };
-  }, []);
+  }, [page, refreshKey]);
 
   const startEditing = (car) => {
     setEditingCar({
@@ -104,7 +95,7 @@ const ManageCar = () => {
       setNotice("Vehicle updated successfully.");
       setEditingCar(null);
       setThumbnail(null);
-      await fetchCars();
+      setRefreshKey((current) => current + 1);
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
@@ -123,6 +114,7 @@ const ManageCar = () => {
         item.id === car.id ? { ...item, status } : item
       ));
       setNotice("Vehicle status updated.");
+      setRefreshKey((current) => current + 1);
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
@@ -139,6 +131,11 @@ const ManageCar = () => {
       await api.delete(`/vehicles/${car.id}`);
       setCars((current) => current.filter((item) => item.id !== car.id));
       setNotice("Vehicle deleted successfully.");
+      if (cars.length === 1 && page > 1) {
+        setPage(page - 1);
+      } else {
+        setRefreshKey((current) => current + 1);
+      }
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
@@ -204,6 +201,7 @@ const ManageCar = () => {
           </tbody>
         </table>
       </div>
+      {pagination.totalPage > 0 && <Pagination page={page} setPage={setPage} totalPage={pagination.totalPage} />}
 
       {editingCar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation">

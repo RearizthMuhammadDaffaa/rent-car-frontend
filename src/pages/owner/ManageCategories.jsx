@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import Title from "../../components/owner/Title";
 import api from "../../api/axios";
+import Pagination from "../../components/Pagination";
 
 const getErrorMessage = (error) =>
   error.response?.data?.message || error.response?.data?.error?.message || "Something went wrong. Please try again.";
 
 const ManageCategories = () => {
+  const limit = 5;
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -16,35 +18,33 @@ const ManageCategories = () => {
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState("");
+  const [page, setPage] = useState(1);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [pagination, setPagination] = useState({ page: 1, totalPage: 1 });
 
-  const fetchCategories = async () => {
+  const fetchCategories = async (requestedPage = page, isActive = () => true) => {
     setLoading(true);
     setError("");
     try {
-      const response = await api.get("/vehicle-cat");
-      setCategories(response.data.vehiclesCat || []);
+      const response = await api.get("/vehicle-cat", {
+        params: { page: requestedPage, limit },
+      });
+      if (!isActive()) return;
+      const result = response.data.vehiclesCat;
+      setCategories(result?.vehiclesCat || []);
+      setPagination(result?.pagination || { page: 1, totalPage: 1 });
     } catch (requestError) {
-      setError(getErrorMessage(requestError));
+      if (isActive()) setError(getErrorMessage(requestError));
     } finally {
-      setLoading(false);
+      if (isActive()) setLoading(false);
     }
   };
 
   useEffect(() => {
     let active = true;
-    const loadInitialCategories = async () => {
-      try {
-        const response = await api.get("/vehicle-cat");
-        if (active) setCategories(response.data.vehiclesCat || []);
-      } catch (requestError) {
-        if (active) setError(getErrorMessage(requestError));
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-    loadInitialCategories();
+    fetchCategories(page, () => active);
     return () => { active = false; };
-  }, []);
+  }, [page, refreshKey]);
 
   const resetForm = () => {
     setFormOpen(false);
@@ -77,7 +77,7 @@ const ManageCategories = () => {
         setNotice("Category created successfully.");
       }
       resetForm();
-      await fetchCategories();
+      setRefreshKey((current) => current + 1);
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
@@ -94,6 +94,11 @@ const ManageCategories = () => {
       await api.delete(`/vehicle-cat/${category.id}`);
       setCategories((current) => current.filter((item) => item.id !== category.id));
       setNotice("Category deleted successfully.");
+      if (categories.length === 1 && page > 1) {
+        setPage(page - 1);
+      } else {
+        setRefreshKey((current) => current + 1);
+      }
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
@@ -129,6 +134,7 @@ const ManageCategories = () => {
           </tbody>
         </table>
       </div>
+      {pagination.totalPage > 0 && <Pagination page={page} setPage={setPage} totalPage={pagination.totalPage} />}
 
       {formOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
         <form onSubmit={saveCategory} className="w-full max-w-lg rounded-md bg-white p-5 shadow-xl md:p-7" aria-labelledby="category-form-title">

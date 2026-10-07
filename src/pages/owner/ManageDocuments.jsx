@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import Title from "../../components/owner/Title";
 import api from "../../api/axios";
+import Pagination from "../../components/Pagination";
 
 const getErrorMessage = (error) =>
   error.response?.data?.message || error.response?.data?.error?.message || "Something went wrong. Please try again.";
 
 const ManageDocuments = () => {
+  const limit = 5;
   const [documents, setDocuments] = useState([]);
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,22 +15,33 @@ const ManageDocuments = () => {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [updating, setUpdating] = useState(false);
+  const [page, setPage] = useState(1);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [pagination, setPagination] = useState({ page: 1, totalPage: 1 });
+
+  const fetchDocuments = async (requestedPage = page, isActive = () => true) => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await api.get("/documents", {
+        params: { page: requestedPage, limit },
+      });
+      if (!isActive()) return;
+      const result = response.data.data;
+      setDocuments(result?.documents || []);
+      setPagination(result?.pagination || { page: 1, totalPage: 1 });
+    } catch (requestError) {
+      if (isActive()) setError(getErrorMessage(requestError));
+    } finally {
+      if (isActive()) setLoading(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
-    const loadInitialDocuments = async () => {
-      try {
-        const response = await api.get("/documents");
-        if (active) setDocuments(response.data.data || []);
-      } catch (requestError) {
-        if (active) setError(getErrorMessage(requestError));
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-    loadInitialDocuments();
+    fetchDocuments(page, () => active);
     return () => { active = false; };
-  }, []);
+  }, [page, refreshKey]);
 
   const openDocument = async (document) => {
     setSelectedDocument({ id: document.id, userId: document.user_id, status: document.status });
@@ -58,6 +71,7 @@ const ManageDocuments = () => {
       setSelectedDocument((current) => ({ ...current, status }));
       setDocuments((current) => current.map((item) => item.id === selectedDocument.id ? { ...item, status } : item));
       setNotice(`Document ${status.toLowerCase()}.`);
+      setRefreshKey((current) => current + 1);
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
@@ -88,6 +102,7 @@ const ManageDocuments = () => {
           </tbody>
         </table>
       </div>
+      {pagination.totalPage > 0 && <Pagination page={page} setPage={setPage} totalPage={pagination.totalPage} />}
 
       {selectedDocument && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
         <section className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-md bg-white p-5 shadow-xl md:p-7" role="dialog" aria-modal="true" aria-labelledby="document-review-title">

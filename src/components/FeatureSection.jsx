@@ -10,7 +10,7 @@ const FeatureSection = () => {
 
   const fetchCars = async () => {
     const response =  await api.get('/vehicles');
-    setCars(response.data.vehicles);
+    setCars(response.data.vehicles.vehicles);
     
   }
 

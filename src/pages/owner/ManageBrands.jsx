@@ -7,6 +7,7 @@ const getErrorMessage = (error) =>
   error.response?.data?.message || error.response?.data?.error?.message || "Something went wrong. Please try again.";
 
 const ManageBrands = () => {
+  const limit = 5;
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -18,52 +19,35 @@ const ManageBrands = () => {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState("");
   const [page, setPage] = useState(1);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [pagination, setPagination] = useState({
-        page: 1,
-        totalPage: 1,
-});
+    page: 1,
+    totalPage: 1,
+  });
 
-  const fetchBrands = async () => {
+  const fetchBrands = async (requestedPage = page, isActive = () => true) => {
     setLoading(true);
     setError("");
     try {
-      const response = await api.get("/brands");
-      setBrands(response.data.brands || []);
+      const response = await api.get("/brands", {
+        params: { page: requestedPage, limit },
+      });
+      if (!isActive()) return;
+      const result = response.data.brands;
+      setBrands(result?.brands || []);
+      setPagination(result?.pagination || { page: 1, totalPage: 1 });
     } catch (requestError) {
-      setError(getErrorMessage(requestError));
+      if (isActive()) setError(getErrorMessage(requestError));
     } finally {
-      setLoading(false);
+      if (isActive()) setLoading(false);
     }
   };
 
   useEffect(() => {
     let active = true;
-    const loadInitialBrands = async () => {
-      try {
-        const response = await api.get("/brands" , {
-            params: {
-          page: page,
-       },
-        });
-        if (active){ 
-          setBrands(response.data.brands.brands || [])
-          setPagination(
-            response.data.brands.pagination || {
-            page: 1,
-            totalPages: 1,
-            }
-          )
-        };
-        console.log(response.data.brands.pagination.totalPage)
-      } catch (requestError) {
-        if (active) setError(getErrorMessage(requestError));
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-    loadInitialBrands();
+    fetchBrands(page, () => active);
     return () => { active = false; };
-  }, [page]);
+  }, [page, refreshKey]);
 
   const resetForm = () => {
     setFormOpen(false);
@@ -115,7 +99,7 @@ const ManageBrands = () => {
         setNotice("Brand created successfully.");
       }
       resetForm();
-      await fetchBrands();
+      setRefreshKey((current) => current + 1);
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
@@ -132,6 +116,11 @@ const ManageBrands = () => {
       await api.delete(`/brands/${brand.id}`);
       setBrands((current) => current.filter((item) => item.id !== brand.id));
       setNotice("Brand deleted successfully.");
+      if (brands.length === 1 && page > 1) {
+        setPage(page - 1);
+      } else {
+        setRefreshKey((current) => current + 1);
+      }
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
@@ -176,7 +165,7 @@ const ManageBrands = () => {
           </tbody>
         </table>
       </div>
-        <Pagination page={page} setPage={setPage} totalPage={pagination.totalPage}/>
+        {pagination.totalPage > 0 && <Pagination page={page} setPage={setPage} totalPage={pagination.totalPage} />}
 
       {formOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

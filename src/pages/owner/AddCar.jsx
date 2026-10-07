@@ -25,12 +25,12 @@ const AddCar = () => {
 
   const fetchBrands = async () => {
     const response = await api.get("/brands");
-    setBrands(response.data.brands);
+    setBrands(response.data.brands.brands);
   };
 
   const fetchCarCat = async () => {
     const response = await api.get("/vehicle-cat");
-    setCarCategories(response.data.vehiclesCat);
+    setCarCategories(response.data.vehiclesCat.vehiclesCat);
    
   };
 

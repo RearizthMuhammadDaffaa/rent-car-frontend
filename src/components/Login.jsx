@@ -1,20 +1,22 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/useAuth";
-import { useNavigate } from "react-router-dom";
-
 
 const Login = ({ setShowLogin, setAlert }) => {
-  const [state, setState] = React.useState("login");
-  const [name, setName] = React.useState("");
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-
-  const { login, user } = useAuth();
-  const navigate = useNavigate();
-  const [success, setSuccess] = useState("");
-
+  const [state, setState] = useState("login");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const { login, register } = useAuth();
+
+  const resetForm = () => {
+    setName("");
+    setEmail("");
+    setPassword("");
+    setError("");
+  };
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
@@ -23,14 +25,26 @@ const Login = ({ setShowLogin, setAlert }) => {
       setLoading(true);
       setError("");
 
+      if (state === "register") {
+        await register({ name, email, password });
+        setAlert("Registrasi berhasil! Silakan login.");
+        setState("login");
+        resetForm();
+        setShowLogin(false);
+        return;
+      }
+
       await login(email, password);
-
-      console.log(user);
-
       setShowLogin(false);
       setAlert("Login berhasil!");
-    } catch (error) {
-      setError(error.response?.data?.message || "Email atau password salah");
+    } catch (err) {
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        (state === "register" ? "Gagal membuat akun." : "Email atau password salah");
+
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -41,7 +55,6 @@ const Login = ({ setShowLogin, setAlert }) => {
       onClick={() => setShowLogin(false)}
       className="fixed top-0 bottom-0 left-0 right-0 z-[100] flex items-center text-sm text-gray-600 bg-black/50"
     >
-     
       <form
         onSubmit={onSubmitHandler}
         onClick={(e) => e.stopPropagation()}
@@ -51,6 +64,7 @@ const Login = ({ setShowLogin, setAlert }) => {
           <span className="text-primary">User</span>{" "}
           {state === "login" ? "Login" : "Sign Up"}
         </p>
+
         {state === "register" && (
           <div className="w-full">
             <p>Name</p>
@@ -64,6 +78,7 @@ const Login = ({ setShowLogin, setAlert }) => {
             />
           </div>
         )}
+
         <div className="w-full ">
           <p>Email</p>
           <input
@@ -75,6 +90,7 @@ const Login = ({ setShowLogin, setAlert }) => {
             required
           />
         </div>
+
         <div className="w-full ">
           <p>Password</p>
           <input
@@ -86,11 +102,21 @@ const Login = ({ setShowLogin, setAlert }) => {
             required
           />
         </div>
+
+        {error && (
+          <p className="w-full rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+            {error}
+          </p>
+        )}
+
         {state === "register" ? (
           <p>
             Already have account?{" "}
             <span
-              onClick={() => setState("login")}
+              onClick={() => {
+                setState("login");
+                setError("");
+              }}
               className="text-primary cursor-pointer"
             >
               click here
@@ -100,20 +126,24 @@ const Login = ({ setShowLogin, setAlert }) => {
           <p>
             Create an account?{" "}
             <span
-              onClick={() => setState("register")}
+              onClick={() => {
+                setState("register");
+                setError("");
+              }}
               className="text-primary cursor-pointer"
             >
               click here
             </span>
           </p>
         )}
-        {
-          loading ? ( <button type="submit" disabled={true} className="rounded-md bg-primary w-full py-2 font-medium text-white disabled:opacity-60">Saving</button>) 
-          : ( <button className="bg-primary hover:bg-blue-800 transition-all text-white w-full py-2 rounded-md cursor-pointer">
-          {state === "register" ? "Create Account" : "Login"}
-        </button> )
-        }
-       
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-primary hover:bg-blue-800 transition-all text-white w-full py-2 rounded-md cursor-pointer disabled:opacity-60"
+        >
+          {loading ? "Saving" : state === "register" ? "Create Account" : "Login"}
+        </button>
       </form>
     </div>
   );
