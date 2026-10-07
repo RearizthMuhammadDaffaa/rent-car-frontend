@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Title from "../../components/owner/Title";
 import api from "../../api/axios";
+import Pagination from "../../components/Pagination";
 
 const getErrorMessage = (error) =>
   error.response?.data?.message || error.response?.data?.error?.message || "Something went wrong. Please try again.";
@@ -16,6 +17,11 @@ const ManageBrands = () => {
   const [logo, setLogo] = useState(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState("");
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({
+        page: 1,
+        totalPage: 1,
+});
 
   const fetchBrands = async () => {
     setLoading(true);
@@ -34,8 +40,21 @@ const ManageBrands = () => {
     let active = true;
     const loadInitialBrands = async () => {
       try {
-        const response = await api.get("/brands");
-        if (active) setBrands(response.data.brands || []);
+        const response = await api.get("/brands" , {
+            params: {
+          page: page,
+       },
+        });
+        if (active){ 
+          setBrands(response.data.brands.brands || [])
+          setPagination(
+            response.data.brands.pagination || {
+            page: 1,
+            totalPages: 1,
+            }
+          )
+        };
+        console.log(response.data.brands.pagination.totalPage)
       } catch (requestError) {
         if (active) setError(getErrorMessage(requestError));
       } finally {
@@ -44,7 +63,7 @@ const ManageBrands = () => {
     };
     loadInitialBrands();
     return () => { active = false; };
-  }, []);
+  }, [page]);
 
   const resetForm = () => {
     setFormOpen(false);
@@ -121,7 +140,7 @@ const ManageBrands = () => {
   };
 
   return (
-    <div className="w-full px-4 pt-10 md:px-10">
+    <div className="w-full flex flex-col px-4 pt-10 md:px-10">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <Title title="Manage Brands" subTitle="Maintain the vehicle brands and their logos." />
         <button type="button" onClick={openCreateForm} className="rounded-md bg-primary px-4 py-2.5 font-medium text-white">Add brand</button>
@@ -157,6 +176,7 @@ const ManageBrands = () => {
           </tbody>
         </table>
       </div>
+        <Pagination page={page} setPage={setPage} totalPage={pagination.totalPage}/>
 
       {formOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

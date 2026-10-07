@@ -21,6 +21,7 @@ import Alert from "./components/Alert";
 import ManageBrands from "./pages/owner/ManageBrands";
 import VerifyDocuments from "./pages/owner/VerifyDocuments";
 import StatusDocuments from "./pages/owner/StatusDocuments";
+import PaymentFinish from "./pages/PaymentFinish";
 
 const App = () => {
   const [alert, setAlert] = useState(null);
@@ -45,8 +46,9 @@ const App = () => {
 
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/car-details/:id" element={<CarDetail />} />
+        <Route path="/car-details/:id" element={<CarDetail setShowLogin={setShowLogin} />} />
         <Route path="/cars" element={<Cars />} />
+        <Route path="/payment/finish" element={<PaymentFinish />} />
         <Route element={<ProtectedRoute allowedRoles={['CUSTOMER']} />}>
           <Route path="/my-bookings" element={<MyBookings />} />
         </Route>
