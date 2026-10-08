@@ -37,12 +37,13 @@ const loadPayment = async (bookingId) => {
 
 const PaymentFinish = () => {
   const [searchParams] = useSearchParams()
+   const bookingId = window.sessionStorage.getItem('pendingPaymentBookingId')
+    || searchParams.get('order_id')?.replace(/^BOOKING-/, '')
   const [payment, setPayment] = useState(null)
   const [loading, setLoading] = useState(Boolean(bookingId))
   const [error, setError] = useState('')
 
-  const bookingId = window.sessionStorage.getItem('pendingPaymentBookingId')
-    || searchParams.get('order_id')?.replace(/^BOOKING-/, '')
+ 
 
   const refreshStatus = useCallback(async () => {
     if (!bookingId) {
